@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>貸款試算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef3f5; --panel:#ffffff; --ink:#12303a; --muted:#5d7580; --line:#d3dfe4;
+  --accent:#0e6e75; --accent-ink:#ffffff; --principal:#0e6e75; --interest:#e0a23a; --field:#f6f9fa;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e1b21; --panel:#162830; --ink:#e6f0f3; --muted:#92abb5; --line:#28414b;
+    --accent:#4fb8bf; --accent-ink:#06242a; --principal:#4fb8bf; --interest:#e8b155; --field:#112228;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1b21; --panel:#162830; --ink:#e6f0f3; --muted:#92abb5; --line:#28414b;
+  --accent:#4fb8bf; --accent-ink:#06242a; --principal:#4fb8bf; --interest:#e8b155; --field:#112228;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:8px 0 2px;font-weight:700}
+.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:16px}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;padding:8px 6px;border-radius:7px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);font-weight:500}
+.field{margin-bottom:14px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.inp{display:flex;align-items:center;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:0 12px}
+.inp:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.inp input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:20px;font-weight:500;padding:10px 0;outline:none}
+.inp span{color:var(--muted);font-size:14px;margin-left:8px;white-space:nowrap}
+.hint{font-size:12px;color:var(--muted);margin-top:3px;min-height:18px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--field);color:var(--ink);font:inherit;font-size:14px;padding:8px;border-radius:10px;cursor:pointer}
+.seg button[aria-pressed="true"]{border-color:var(--accent);outline:1px solid var(--accent);font-weight:500}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.result{margin-top:16px}
+.big-label{font-size:14px;color:var(--muted)}
+.big{font-size:44px;font-weight:700;line-height:1.15;color:var(--accent);letter-spacing:-.5px;word-break:break-all}
+.big small{font-size:16px;font-weight:500;color:var(--muted);margin-left:4px;letter-spacing:0}
+.big-note{font-size:13px;color:var(--muted);min-height:20px}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:16px 0 8px;background:var(--line)}
+.bar i{display:block;height:100%}
+.legend{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.stats{margin-top:14px;border-top:1px solid var(--line)}
+.stats div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.stats div b{font-weight:500;text-align:right}
+details{margin-top:14px}
+summary{cursor:pointer;font-size:14px;color:var(--accent);padding:6px 0}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
+th,td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:500}
+th:first-child,td:first-child{text-align:left}
+.err{color:#c0392b;font-size:14px;margin-top:12px}
+footer{font-size:12px;color:var(--muted);margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <h1>貸款試算</h1>
+  <p class="sub">輸入條件，立即看到每月還款、總利息與還款明細。</p>
+
+  <div class="panel">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-pay" aria-selected="true">算每月還款</button>
+      <button role="tab" id="tab-max" aria-selected="false">算可貸金額</button>
+    </div>
+
+    <div class="field" id="f-loan">
+      <label for="loan">貸款金額</label>
+      <div class="inp"><input id="loan" type="number" inputmode="decimal" min="0" step="any" value="800"><span>萬元</span></div>
+      <div class="hint" id="loan-hint"></div>
+    </div>
+    <div class="field" id="f-budget" hidden>
+      <label for="budget">每月可負擔的還款金額</label>
+      <div class="inp"><input id="budget" type="number" inputmode="decimal" min="0" step="any" value="30000"><span>元／月</span></div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="rate">年利率</label>
+        <div class="inp"><input id="rate" type="number" inputmode="decimal" min="0" step="any" value="2.3"><span>%</span></div>
+      </div>
+      <div class="field">
+        <label for="years">貸款年限</label>
+        <div class="inp"><input id="years" type="number" inputmode="decimal" min="1" step="1" value="30"><span>年</span></div>
+      </div>
+    </div>
+
+    <div class="field" id="f-method" style="margin-bottom:0">
+      <label>還款方式</label>
+      <div class="seg">
+        <button id="m-annuity" aria-pressed="true">本息平均攤還</button>
+        <button id="m-principal" aria-pressed="false">本金平均攤還</button>
+      </div>
+      <div class="hint" id="method-hint">每月還款金額固定，最常見。</div>
+    </div>
+  </div>
+
+  <div class="panel result" id="out" aria-live="polite"></div>
+
+  <footer>試算結果僅供參考，實際金額以銀行核貸條件為準。</footer>
+</main>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var state = {mode:'pay', method:'annuity'};
+  var fmt = function(n){return Math.round(n).toLocaleString('zh-TW')};
+  var wan = function(n){
+    var w = n/10000;
+    return (w>=100 ? Math.round(w) : Math.round(w*10)/10).toLocaleString('zh-TW')+' 萬';
+  };
+
+  function annuity(P,r,n){ return r===0 ? P/n : P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1); }
+
+  function schedule(P,r,n,method){
+    var bal=P, rows=[], yr=0, yp=0, yi=0, totalI=0, first=0, last=0;
+    var pmt = annuity(P,r,n), pp = P/n;
+    for(var k=1;k<=n;k++){
+      var i = bal*r, p = method==='annuity' ? pmt-i : pp, pay = p+i;
+      if(k===1) first=pay; if(k===n) last=pay;
+      bal = Math.max(0,bal-p); yp+=p; yi+=i; totalI+=i;
+      if(k%12===0 || k===n){ yr++; rows.push({y:yr,p:yp,i:yi,b:bal}); yp=0; yi=0; }
+    }
+    return {rows:rows,totalI:totalI,first:first,last:last};
+  }
+
+  function render(){
+    var rate = parseFloat($('rate').value), years = parseFloat($('years').value);
+    var out = $('out');
+    if(!(rate>=0) || !(years>=1)){ out.innerHTML='<div class="err">請輸入有效的年利率（0 以上）與年限（至少 1 年）。</div>'; return; }
+    var r = rate/100/12, n = Math.round(years*12), P;
+
+    if(state.mode==='max'){
+      var b = parseFloat($('budget').value);
+      if(!(b>0)){ out.innerHTML='<div class="err">請輸入每月可負擔的金額。</div>'; return; }
+      P = r===0 ? b*n : b*(Math.pow(1+r,n)-1)/(r*Math.pow(1+r,n));
+      state.method='annuity';
+    } else {
+      var L = parseFloat($('loan').value);
+      if(!(L>0)){ out.innerHTML='<div class="err">請輸入貸款金額。</div>'; return; }
+      P = L*10000;
+      $('loan-hint').textContent = '＝ NT$ '+fmt(P);
+    }
+
+    var s = schedule(P,r,n,state.method);
+    var total = P + s.totalI, pctI = total>0 ? s.totalI/total*100 : 0;
+    var h = '';
+
+    if(state.mode==='max'){
+      h += '<div class="big-label">每月 NT$ '+fmt(parseFloat($('budget').value))+'，最多可貸</div>';
+      h += '<div class="big">'+wan(P)+'<small>元</small></div>';
+      h += '<div class="big-note">約 NT$ '+fmt(P)+'</div>';
+    } else if(state.method==='annuity'){
+      h += '<div class="big-label">每月還款</div>';
+      h += '<div class="big">'+fmt(s.first)+'<small>元</small></div>';
+      h += '<div class="big-note">每月金額固定，共 '+n+' 期</div>';
+    } else {
+      h += '<div class="big-label">第 1 個月還款（最高）</div>';
+      h += '<div class="big">'+fmt(s.first)+'<small>元</small></div>';
+      h += '<div class="big-note">逐月遞減，最後一個月為 '+fmt(s.last)+' 元</div>';
+    }
+
+    h += '<div class="bar" role="img" aria-label="本金與利息比例"><i style="width:'+(100-pctI)+'%;background:var(--principal)"></i><i style="width:'+pctI+'%;background:var(--interest)"></i></div>';
+    h += '<div class="legend"><span><span class="dot" style="background:var(--principal)"></span>本金 '+(100-pctI).toFixed(1)+'%</span><span><span class="dot" style="background:var(--interest)"></span>利息 '+pctI.toFixed(1)+'%</span></div>';
+
+    h += '<div class="stats">';
+    h += '<div><span>貸款金額</span><b>NT$ '+fmt(P)+'</b></div>';
+    h += '<div><span>總利息</span><b>NT$ '+fmt(s.totalI)+'</b></div>';
+    h += '<div><span>總還款金額</span><b>NT$ '+fmt(total)+'</b></div>';
+    h += '<div><span>還款期數</span><b>'+n+' 期（'+years+' 年）</b></div>';
+    h += '</div>';
+
+    h += '<details><summary>每年還款明細</summary><div class="scroll"><table><thead><tr><th>年度</th><th>已還本金</th><th>已付利息</th><th>剩餘本金</th></tr></thead><tbody>';
+    s.rows.forEach(function(x){ h += '<tr><td>第 '+x.y+' 年</td><td>'+fmt(x.p)+'</td><td>'+fmt(x.i)+'</td><td>'+fmt(x.b)+'</td></tr>'; });
+    h += '</tbody></table></div></details>';
+    out.innerHTML = h;
+  }
+
+  function setMode(m){
+    state.mode = m;
+    $('tab-pay').setAttribute('aria-selected', m==='pay');
+    $('tab-max').setAttribute('aria-selected', m==='max');
+    $('f-loan').hidden = m==='max';
+    $('f-budget').hidden = m==='pay';
+    $('f-method').hidden = m==='max';
+    render();
+  }
+  function setMethod(m){
+    state.method = m;
+    $('m-annuity').setAttribute('aria-pressed', m==='annuity');
+    $('m-principal').setAttribute('aria-pressed', m==='principal');
+    $('method-hint').textContent = m==='annuity' ? '每月還款金額固定，最常見。' : '每月還的本金固定，利息逐月減少，所以月付金會越來越低；總利息較少。';
+    render();
+  }
+
+  $('tab-pay').onclick = function(){setMode('pay')};
+  $('tab-max').onclick = function(){setMode('max')};
+  $('m-annuity').onclick = function(){setMethod('annuity')};
+  $('m-principal').onclick = function(){setMethod('principal')};
+  ['loan','budget','rate','years'].forEach(function(id){ $(id).addEventListener('input', render); });
+  render();
+})();
+</script>
+</body>
+</html>
